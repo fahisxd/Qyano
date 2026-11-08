@@ -19,9 +19,3 @@ def hbe_engine(text, op):
             return {"error" : "error/engines/hbe/invalid-operation"}
     except Exception as e:
         return {"error" : f"error/engines/hbe/{str(e)}"}
-
-#tests
-# print(hbe_engine("Qyano", "hash"))
-# print(hbe_engine("Qyano", "enc"))
-# print(hbe_engine("UXlhbm8=", "dec"))
-# print(hbe_engine("!!!", "dec"))

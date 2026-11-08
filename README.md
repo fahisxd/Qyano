@@ -24,9 +24,9 @@ Add that line to your shell startup file to keep it across sessions. Keep this p
 ## Manage the environment
 
 ```sh
-qy env status   # Check the environment and user command
-qy update       # Update Qyano and its dependencies
-qy env install  # Reinstall Qyano and its dependencies
+qy env status
+qy update
+qy env install
 ```
 
 Before `qy` is available, run `python3 -m qyano.env_manager install` from this directory. The manager leaves an existing, unrelated `~/.local/bin/qy` untouched and reports the conflict.

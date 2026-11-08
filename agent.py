@@ -64,7 +64,6 @@ def _load_env_file():
 
 def nvd_search(query, limit=5):
     """Search NVD by CVE identifier or keyword and return concise CVE data."""
-    # NVD lookups work independently of AI provider configuration.
     _load_env_file()
     if not isinstance(query, str) or not query.strip():
         return {"status": "error", "verified_data": False,
@@ -148,8 +147,6 @@ def nvd_search(query, limit=5):
                     "severity": data.get("baseSeverity") or metric.get("baseSeverity"),
                     "vector": data.get("vectorString"),
                 })
-        # Preferred score rule: NVD-authored first, then Primary over
-        # Secondary, then the newest CVSS version. Keep all assessments too.
         def assessment_rank(assessment):
             version_parts = tuple(
                 int(part) if part.isdigit() else 0
@@ -212,7 +209,6 @@ TOOLS = [{
 
 
 def _provider_config():
-    # Shell values have precedence; saved setup takes precedence over .env.
     env_file = _read_env_file()
     from qyano.cli.agent_setup import load_config
     saved = load_config() or {}

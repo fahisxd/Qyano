@@ -8,7 +8,6 @@ class Result:
         self.code = code
 
 
-# Synonyms and shortcuts all end at these canonical command handlers.
 COMMANDS = {
     "hash": "hash", "ihash": "ihash", "base": "base", "ibase": "ibase",
     "iden": "iden", "identify": "iden", "port": "port", "cve": "cve",
@@ -59,7 +58,6 @@ def dispatch(argv):
             return _usage(str(exc))
         if target is None:
             return _usage(f"Unknown command: {name}. Run 'qy help' for usage.")
-        # Targets are validated canonical tokens and never executed by a shell.
         return dispatch([*target, *args])
 
     if command == "help":

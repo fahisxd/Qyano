@@ -4,7 +4,6 @@ import shlex
 
 
 def create_app():
-    # Textual is deliberately imported only when `qy tui` is used.
     from textual.app import App, ComposeResult
     from textual.containers import VerticalScroll
     from textual.widgets import Footer, Header, Input, Static
