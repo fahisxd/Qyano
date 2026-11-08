@@ -1,0 +1,71 @@
+# Qyano
+
+Qyano is a Python command line toolkit for hashes, Base64, port lookups, CVE searches, and AI research. It also includes a terminal interface. All features run through the `qy` command.
+
+## Install
+
+Requires Python 3.10 or newer. From the project directory, run:
+
+```sh
+python3 -m qyano.env_manager install
+qy hash hello
+```
+
+The manager creates `.venv`, installs Qyano and its terminal interface dependencies, and links `~/.local/bin/qy` to the environment's executable. You do not need to activate `.venv` to use `qy`.
+
+If your shell cannot find `qy`, add the user bin directory to your `PATH`:
+
+```sh
+export PATH="$HOME/.local/bin:$PATH"
+```
+
+Add that line to your shell startup file to keep it across sessions. Keep this project directory in place: the command in `~/.local/bin` points into its `.venv`.
+
+## Manage the environment
+
+```sh
+qy env status   # Check the environment and user command
+qy update       # Update Qyano and its dependencies
+qy env install  # Reinstall Qyano and its dependencies
+```
+
+Before `qy` is available, run `python3 -m qyano.env_manager install` from this directory. The manager leaves an existing, unrelated `~/.local/bin/qy` untouched and reports the conflict.
+
+## Use Qyano
+
+```sh
+qy hash hello
+qy ihash 5d41402abc4b2a76b9719d911017c592
+qy base encode hello
+qy base decode aGVsbG8=
+qy ibase aGVsbG8=
+qy iden aGVsbG8=
+qy port 443
+qy cve CVE-2021-44228
+qy res 'Explain CVE-2021-44228'
+qy res
+```
+
+Run `qy` or `qy tui` to open the terminal interface. Use Ctrl+1 through Ctrl+8 to switch sections and Ctrl+Q to exit. Run `qy help` for the full command list. Most tool commands accept `--json` for machine-readable output.
+
+Short aliases include `h` for `hash`, `hi` for `ihash`, `e` for `base encode`, `d` for `base decode`, `p` for `port`, `c` for `cve`, and `r` for `res`. You can also manage your own aliases:
+
+```sh
+qy alias set b base encode
+qy b hello
+qy alias list
+qy alias remove b
+qy alias reset
+```
+
+## AI research setup
+
+`qy res` needs an OpenRouter or OpenAI API key. Run `qy agent setup` to choose a provider, enter a hidden key, and verify it. To select a provider directly, run `qy agent setup openai` or `qy agent setup openrouter`.
+
+Verified settings are saved with owner-only permissions at `~/.config/qyano/agent.json`. Environment variables (`AI_PROVIDER`, the matching API key, and optional `AI_MODEL`) take precedence. `qy cve` searches NVD directly and does not require an AI key.
+
+## Test
+
+```sh
+.venv/bin/python -m unittest discover -s tests -q
+```
