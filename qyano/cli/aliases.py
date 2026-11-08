@@ -16,7 +16,8 @@ TARGETS = {
     ("ibase",), ("iden",), ("port",), ("cve",), ("res",),
 }
 RESERVED = {"hash", "ihash", "base", "ibase", "iden", "identify",
-            "port", "cve", "res", "research", "alias", "agent", "tui", "help"}
+            "port", "cve", "res", "research", "alias", "agent", "tui", "help",
+            "connect", "env", "update"}
 
 
 def config_path():

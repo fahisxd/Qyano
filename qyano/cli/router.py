@@ -14,11 +14,15 @@ COMMANDS = {
     "iden": "iden", "identify": "iden", "port": "port", "cve": "cve",
     "res": "res", "research": "res", "alias": "alias", "tui": "tui",
     "help": "help", "agent": "agent", "env": "env", "update": "update",
+    "connect": "connect",
 }
 
 HELP = """Usage: qy [--json] COMMAND [ARGS]
 
-qy or qy tui                 Open the terminal interface
+qy                            Run saved connectors
+qy tui                        Open the terminal interface
+qy connect                    Set up SSH, network command, and AI summary
+qy connect shell              Add, list, edit, or delete connectors
 qy hash TEXT                 Generate SHA-256, MD5, and SHA-1
 qy ihash TEXT                Identify hash shape
 qy base encode|decode TEXT   Encode or decode Base64
@@ -44,7 +48,7 @@ def _usage(message):
 def dispatch(argv):
     """Return a structured result; only the entry point renders it."""
     if not argv:
-        return Result({"launch_tui": True})
+        return Result({"connector_action": "run"})
     name, *args = argv
     command = COMMANDS.get(name)
     if command is None:
@@ -62,6 +66,12 @@ def dispatch(argv):
         return Result(HELP) if not args else _usage("help takes no arguments")
     if command == "tui":
         return Result({"launch_tui": True}) if not args else _usage("tui takes no arguments")
+    if command == "connect":
+        if not args:
+            return Result({"connector_action": "setup"})
+        if args == ["shell"]:
+            return Result({"connector_action": "shell"})
+        return _usage("Usage: qy connect [shell]")
     if command == "alias":
         return _alias(args)
     if command == "agent":

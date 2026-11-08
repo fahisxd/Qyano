@@ -1,6 +1,6 @@
 # Qyano
 
-Qyano is a Python command line toolkit for hashes, Base64, port lookups, CVE searches, and AI research. It also includes a terminal interface. All features run through the `qy` command.
+Qyano is a Python command line toolkit for hashes, Base64, port lookups, CVE searches, AI research, and running saved command connectors. It also includes a terminal interface. All features run through the `qy` command.
 
 ## Install
 
@@ -33,6 +33,8 @@ Before `qy` is available, run `python3 -m qyano.env_manager install` from this d
 
 ## Use Qyano
 
+Run `qy` to start the connector workflow after setup. Run `qy tui` to open the terminal interface. Use Ctrl+1 through Ctrl+8 to switch sections and Ctrl+Q to exit.
+
 ```sh
 qy hash hello
 qy ihash 5d41402abc4b2a76b9719d911017c592
@@ -46,7 +48,7 @@ qy res 'Explain CVE-2021-44228'
 qy res
 ```
 
-Run `qy` or `qy tui` to open the terminal interface. Use Ctrl+1 through Ctrl+8 to switch sections and Ctrl+Q to exit. Run `qy help` for the full command list. Most tool commands accept `--json` for machine-readable output.
+Run `qy help` for the full command list. Most tool commands accept `--json` for machine-readable output.
 
 Short aliases include `h` for `hash`, `hi` for `ihash`, `e` for `base encode`, `d` for `base decode`, `p` for `port`, `c` for `cve`, and `r` for `res`. You can also manage your own aliases:
 
@@ -57,6 +59,20 @@ qy alias list
 qy alias remove b
 qy alias reset
 ```
+
+## Connectors
+
+Run `qy connect` to set up the connector engine. It asks for an attack machine SSH target in `user@host` form; leave it empty to run commands locally. For SSH, you can supply a private key path, or let SSH use its configured keys or prompt for a password. Setup checks the SSH connection. Qyano saves the host, port, and key path, but never a password.
+
+Setup then asks for a network or VPN command and runs it before continuing. Leave it empty if no connection command is needed. Finally, choose whether to enable an AI summary. AI summaries require a configured key from `qy agent setup`. Setup opens the connector shell when complete.
+
+You can reopen the connector shell with `qy connect shell`. It supports `add`, `list`, `edit NAME`, `del NAME`, and `exit`. When adding a connector, enter a name and a shell command. Use `&QUIC` where the target IP belongs and `QUIC1`, `QUIC2`, and so on for inputs. The shell asks you to label each extra input, such as `wordlist`, `subdomain`, or `mode`.
+
+For example, a connector command could be `tool --host &QUIC --wordlist QUIC1 --mode QUIC2`. Qyano asks for the `wordlist` and `mode` values before running it. Keep placeholders unquoted in the saved command; Qyano quotes the values when it fills them.
+
+Run `qy` to use saved connectors. It asks for the network command again, with an option to stop asking on later runs, then asks for a target IP. It offers each connector in saved order and prompts for any plugin values. If AI summaries are enabled, it summarizes the results at the end. A failed network command stops the run before any connector starts.
+
+Connector settings live in `~/.config/qyano/connector.json` with owner-only permissions. Saved connector and network commands are shell commands, so only add commands you intend to run.
 
 ## AI research setup
 
