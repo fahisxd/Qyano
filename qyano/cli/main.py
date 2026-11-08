@@ -16,6 +16,11 @@ def main(argv=None):
     json_mode = "--json" in args
     args = [item for item in args if item != "--json"]
     result = dispatch(args)
+    if isinstance(result.value, dict) and result.value.get("notes_action"):
+        from qyano import notes
+        if result.value["notes_action"] == "add":
+            return notes.quick_note(result.value["args"], json_mode)
+        return notes.main(result.value["args"], json_mode)
     if isinstance(result.value, dict) and result.value.get("connector_action"):
         from qyano.connector import main as connector_main
         return connector_main(result.value["connector_action"])

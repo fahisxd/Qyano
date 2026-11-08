@@ -166,6 +166,10 @@ def setup():
             print("AI is not configured. Run 'qy agent setup', then rerun 'qy connect' to enable summaries.")
             enabled = False
     data["ai_summary"] = enabled
+    from qyano import notes
+    notes_enabled = notes.is_enabled()
+    prompt = "Enable Quick Notes? [Y/n]: " if notes_enabled else "Enable Quick Notes? [y/N]: "
+    notes.set_enabled(ask_yes(prompt, notes_enabled))
     save_config(data)
     print("Setup saved. Opening connector shell.")
     return connector_shell()
@@ -264,6 +268,8 @@ def run_connectors():
     except ValueError:
         print("Enter a valid IPv4 or IPv6 address.", file=sys.stderr)
         return 1
+    from qyano import notes
+    notes.set_current_target(ip)
     results = []
     for item in data["connectors"]:
         print(f"\n{item['name']}: {item['command']}")

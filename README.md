@@ -64,7 +64,7 @@ qy alias reset
 
 Run `qy connect` to set up the connector engine. It asks for an attack machine SSH target in `user@host` form; leave it empty to run commands locally. For SSH, you can supply a private key path, or let SSH use its configured keys or prompt for a password. Setup checks the SSH connection. Qyano saves the host, port, and key path, but never a password.
 
-Setup then asks for a network or VPN command and runs it before continuing. Leave it empty if no connection command is needed. Finally, choose whether to enable an AI summary. AI summaries require a configured key from `qy agent setup`. Setup opens the connector shell when complete.
+Setup then asks for a network or VPN command and runs it before continuing. Leave it empty if no connection command is needed. Finally, choose whether to enable an AI summary and Quick Notes. AI summaries require a configured key from `qy agent setup`. Setup opens the connector shell when complete.
 
 You can reopen the connector shell with `qy connect shell`. It supports `add`, `list`, `edit NAME`, `del NAME`, and `exit`. When adding a connector, enter a name and a shell command. Use `&QUIC` where the target IP belongs and `QUIC1`, `QUIC2`, and so on for inputs. The shell asks you to label each extra input, such as `wordlist`, `subdomain`, or `mode`.
 
@@ -73,6 +73,27 @@ For example, a connector command could be `tool --host &QUIC --wordlist QUIC1 --
 Run `qy` to use saved connectors. It asks for the network command again, with an option to stop asking on later runs, then asks for a target IP. It offers each connector in saved order and prompts for any plugin values. If AI summaries are enabled, it summarizes the results at the end. A failed network command stops the run before any connector starts.
 
 Connector settings live in `~/.config/qyano/connector.json` with owner-only permissions. Saved connector and network commands are shell commands, so only add commands you intend to run.
+
+## Quick Notes Engine
+
+Quick Notes is optional and works entirely offline. Enable it during `qy connect` setup or later with `qy notes enable`. Turning it off with `qy notes disable` keeps existing notes on disk.
+
+```sh
+qy n "Found SSH on port 22"
+qy n
+qy notes
+qy notes search ssh
+qy notes show 12
+qy notes edit 12
+qy notes del 12
+qy notes export
+```
+
+`qy n` with no text opens a one-line note prompt. `qy notes` lists the 20 most recent notes. Search checks note text and target labels without regard to case. Editing prompts for replacement text, and deletion asks for confirmation. `qy notes export` writes a Markdown file in the current directory without replacing an existing file; you can also give it a path.
+
+When you enter a target IP in the connector workflow, Qyano makes it the current note target. Later notes are tagged with that IP; notes saved before a target is set are tagged `GENERAL`. The current target remains set until the next connector target replaces it or you run `qy notes target clear`. Run `qy notes target` to check it.
+
+Notes are stored as JSON in `~/.local/share/qyano/notes.json` (or under `XDG_DATA_HOME`) with owner-only permissions. IDs keep increasing even after deletion. Markdown exports are also created with owner-only permissions.
 
 ## AI research setup
 

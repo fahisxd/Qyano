@@ -39,8 +39,8 @@ class ConnectorTests(unittest.TestCase):
 
     def test_setup_runs_network_before_saving_then_opens_shell(self):
         with tempfile.TemporaryDirectory() as directory, \
-             patch.dict(os.environ, {"XDG_CONFIG_HOME": directory}), \
-             patch("builtins.input", side_effect=["", "printf connected", "n"]), \
+             patch.dict(os.environ, {"XDG_CONFIG_HOME": directory, "XDG_DATA_HOME": directory}), \
+             patch("builtins.input", side_effect=["", "printf connected", "n", "n"]), \
              patch.object(connector, "execute", return_value=(0, "connected")) as execute, \
              patch.object(connector, "connector_shell", return_value=0) as shell, \
              contextlib.redirect_stdout(io.StringIO()):
@@ -55,8 +55,8 @@ class ConnectorTests(unittest.TestCase):
 
     def test_ssh_setup_checks_access_before_network(self):
         with tempfile.TemporaryDirectory() as directory, \
-             patch.dict(os.environ, {"XDG_CONFIG_HOME": directory}), \
-             patch("builtins.input", side_effect=["user@example.test", "2222", "", "vpn-up", "n"]), \
+             patch.dict(os.environ, {"XDG_CONFIG_HOME": directory, "XDG_DATA_HOME": directory}), \
+             patch("builtins.input", side_effect=["user@example.test", "2222", "", "vpn-up", "n", "n"]), \
              patch.object(connector, "execute", side_effect=[(0, ""), (0, "")]) as execute, \
              patch.object(connector, "connector_shell", return_value=0), \
              contextlib.redirect_stdout(io.StringIO()):
@@ -67,8 +67,8 @@ class ConnectorTests(unittest.TestCase):
 
     def test_ai_summary_requires_provider_configuration(self):
         with tempfile.TemporaryDirectory() as directory, \
-             patch.dict(os.environ, {"XDG_CONFIG_HOME": directory}), \
-             patch("builtins.input", side_effect=["", "", "y"]), \
+             patch.dict(os.environ, {"XDG_CONFIG_HOME": directory, "XDG_DATA_HOME": directory}), \
+             patch("builtins.input", side_effect=["", "", "y", "n"]), \
              patch("agent._provider_config", return_value=(None, {"error": "AI not enabled"})), \
              patch.object(connector, "connector_shell", return_value=0), \
              contextlib.redirect_stdout(io.StringIO()) as output:
@@ -78,7 +78,7 @@ class ConnectorTests(unittest.TestCase):
 
     def test_shell_add_edit_delete_and_run_with_summary(self):
         with tempfile.TemporaryDirectory() as directory, \
-             patch.dict(os.environ, {"XDG_CONFIG_HOME": directory}):
+             patch.dict(os.environ, {"XDG_CONFIG_HOME": directory, "XDG_DATA_HOME": directory}):
             data = connector.empty_config()
             data["network_command"] = "vpn-up"
             data["ai_summary"] = True
@@ -107,7 +107,7 @@ class ConnectorTests(unittest.TestCase):
 
     def test_failed_network_stops_before_connector(self):
         with tempfile.TemporaryDirectory() as directory, \
-             patch.dict(os.environ, {"XDG_CONFIG_HOME": directory}):
+             patch.dict(os.environ, {"XDG_CONFIG_HOME": directory, "XDG_DATA_HOME": directory}):
             data = connector.empty_config()
             data["network_command"] = "vpn-up"
             data["ask_network"] = False

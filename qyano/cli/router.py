@@ -13,15 +13,22 @@ COMMANDS = {
     "iden": "iden", "identify": "iden", "port": "port", "cve": "cve",
     "res": "res", "research": "res", "alias": "alias", "tui": "tui",
     "help": "help", "agent": "agent", "env": "env", "update": "update",
-    "connect": "connect",
+    "connect": "connect", "n": "n", "notes": "notes",
 }
 
 HELP = """Usage: qy [--json] COMMAND [ARGS]
 
 qy                            Run saved connectors
 qy tui                        Open the terminal interface
-qy connect                    Set up SSH, network command, and AI summary
+qy connect                    Set up SSH, network, AI summary, and Quick Notes
 qy connect shell              Add, list, edit, or delete connectors
+qy n [TEXT]                   Save a quick note; no text opens input
+qy notes                      List recent notes
+qy notes search QUERY         Search notes
+qy notes show|edit|del ID     Read, edit, or delete a note
+qy notes export [FILE]        Export notes to Markdown
+qy notes enable|disable       Turn Quick Notes on or off
+qy notes target [clear]       Show or clear the current target
 qy hash TEXT                 Generate SHA-256, MD5, and SHA-1
 qy ihash TEXT                Identify hash shape
 qy base encode|decode TEXT   Encode or decode Base64
@@ -70,6 +77,10 @@ def dispatch(argv):
         if args == ["shell"]:
             return Result({"connector_action": "shell"})
         return _usage("Usage: qy connect [shell]")
+    if command == "n":
+        return Result({"notes_action": "add", "args": args})
+    if command == "notes":
+        return Result({"notes_action": "manage", "args": args})
     if command == "alias":
         return _alias(args)
     if command == "agent":
