@@ -39,7 +39,8 @@ class NotesTests(unittest.TestCase):
              patch.dict(os.environ, {"XDG_DATA_HOME": directory}), \
              contextlib.redirect_stdout(io.StringIO()):
             notes.set_enabled(True)
-            with patch("builtins.input", return_value="Research CVE-2021-44228"):
+            with patch("qyano.clipboard.read_text", return_value=None), \
+                 patch("builtins.input", return_value="Research CVE-2021-44228"):
                 self.assertEqual(main(["n"]), 0)
             notes.set_current_target("192.0.2.10")
             self.assertEqual(main(["n", "HTTP running on 8080"]), 0)
@@ -87,6 +88,19 @@ class NotesTests(unittest.TestCase):
             with contextlib.redirect_stdout(io.StringIO()):
                 self.assertEqual(main(["n", "HTTP running on 8080"]), 0)
             self.assertEqual(notes.find_note(1)["target"], "192.0.2.10")
+
+    def test_note_and_search_use_clipboard_when_text_is_omitted(self):
+        with tempfile.TemporaryDirectory() as directory, \
+             patch.dict(os.environ, {"XDG_DATA_HOME": directory}), \
+             patch("qyano.clipboard.read_text", return_value="Copied SSH finding"), \
+             contextlib.redirect_stdout(io.StringIO()):
+            notes.set_enabled(True)
+            self.assertEqual(main(["n"]), 0)
+            self.assertEqual(notes.find_note(1)["text"], "Copied SSH finding")
+            result = io.StringIO()
+            with contextlib.redirect_stdout(result):
+                self.assertEqual(main(["notes", "search"]), 0)
+            self.assertIn("Copied SSH finding", result.getvalue())
 
     def test_setup_can_enable_notes(self):
         with tempfile.TemporaryDirectory() as directory, \

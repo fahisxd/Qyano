@@ -23,6 +23,30 @@ class CLITests(unittest.TestCase):
         self.assertEqual(dispatch(["d", "aGVsbG8="]).value["base64/decode"], "hello")
         self.assertEqual(dispatch(["base", "decode", "!!!"]).code, 1)
 
+    def test_unquoted_text_and_clipboard_fallback(self):
+        with patch("qyano.clipboard.read_text", return_value="hello world") as clipboard:
+            expected = dispatch(["hash", "hello world"]).value
+            self.assertEqual(dispatch(["hash", "hello", "world"]).value, expected)
+            self.assertEqual(dispatch(["hash"]).value, expected)
+            self.assertEqual(dispatch(["base", "encode"]).value,
+                             dispatch(["base", "encode", "hello", "world"]).value)
+            self.assertEqual(dispatch(["iden"]).value["input"], "hello world")
+            self.assertEqual(dispatch(["ihash"]).value["input"], "hello world")
+            self.assertEqual(dispatch(["ibase"]).value["input"], "hello world")
+            self.assertEqual(clipboard.call_count, 5)
+        with patch("qyano.clipboard.read_text", return_value="443"):
+            self.assertEqual(dispatch(["port"]).value, dispatch(["port", "443"]).value)
+        with patch("qyano.clipboard.read_text", return_value="CVE-2021-44228"), \
+             patch("agent.nvd_search", return_value={"status": "ok", "results": []}) as lookup:
+            self.assertEqual(dispatch(["cve"]).code, 0)
+            lookup.assert_called_once_with("CVE-2021-44228")
+        with patch("qyano.clipboard.read_text", return_value="Explain this"), \
+             patch("agent.ai_agent", return_value="answer") as ai:
+            self.assertEqual(dispatch(["res"]).value, {"answer": "answer"})
+            ai.assert_called_once_with("Explain this")
+        with patch("qyano.clipboard.read_text", return_value=None):
+            self.assertEqual(dispatch(["hash"]).code, 2)
+
     def test_identifier_filters_existing_engine(self):
         from eid import identifier_engine
         digest = "5d41402abc4b2a76b9719d911017c592"
@@ -113,11 +137,13 @@ class CLITests(unittest.TestCase):
         with patch("agent.ai_agent", return_value="analysis") as ai:
             self.assertEqual(dispatch(["research", "Explain", "this"]).value["answer"], "analysis")
             ai.assert_called_once_with("Explain this")
-        self.assertEqual(dispatch(["res"]).value, {"interactive_research": True})
+        with patch("qyano.clipboard.read_text", return_value=None):
+            self.assertEqual(dispatch(["res"]).value, {"interactive_research": True})
 
     def test_interactive_research_session(self):
         output = io.StringIO()
-        with patch("builtins.input", side_effect=["Analyze this", "/quit"]), \
+        with patch("qyano.clipboard.read_text", return_value=None), \
+             patch("builtins.input", side_effect=["Analyze this", "/quit"]), \
              patch("agent.ai_agent", return_value="result") as ai, \
              contextlib.redirect_stdout(output):
             self.assertEqual(main(["res"]), 0)

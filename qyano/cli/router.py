@@ -22,33 +22,44 @@ qy                            Run saved connectors
 qy tui                        Open the terminal interface
 qy connect                    Set up SSH, network, AI summary, and Quick Notes
 qy connect shell              Add, list, edit, or delete connectors
-qy n [TEXT]                   Save a quick note; no text opens input
+qy n [TEXT]                   Save a quick note; omitted text uses clipboard
 qy notes                      List recent notes
 qy notes search QUERY         Search notes
 qy notes show|edit|del ID     Read, edit, or delete a note
 qy notes export [FILE]        Export notes to Markdown
 qy notes enable|disable       Turn Quick Notes on or off
 qy notes target [clear]       Show or clear the current target
-qy hash TEXT                 Generate SHA-256, MD5, and SHA-1
-qy ihash TEXT                Identify hash shape
-qy base encode|decode TEXT   Encode or decode Base64
-qy ibase TEXT                Identify Base64
-qy iden TEXT                 Identify formats (also: identify)
-qy port PORT|SERVICE [PROTO] Look up the IANA port glossary
-qy cve CVE-ID|KEYWORDS       Search NVD directly
-qy res [PROMPT]              AI research; no prompt starts a session
+qy hash [TEXT]               Generate SHA-256, MD5, and SHA-1
+qy ihash [TEXT]              Identify hash shape
+qy base encode|decode [TEXT] Encode or decode Base64
+qy ibase [TEXT]              Identify Base64
+qy iden [TEXT]               Identify formats (also: identify)
+qy port [PORT|SERVICE] [PROTO] Look up the IANA port glossary
+qy cve [CVE-ID|KEYWORDS]     Search NVD directly
+qy res [PROMPT]              AI research; empty clipboard starts a session
 qy agent setup [PROVIDER]     Verify and save an OpenRouter or OpenAI key
 qy alias list|set|remove|reset  Manage shortcuts
 qy env install|update|status  Manage the Python environment and user command
 qy update                    Update Qyano and its dependencies
 
 Defaults: h=hash, hi=ihash, e=base encode, d=base decode,
-          p=port, c=cve, r=res. Use --json for machine-readable output.
+          p=port, c=cve, r=res. Omitted text uses the clipboard.
+          Use --json for machine-readable output.
 """
 
 
 def _usage(message):
     return Result({"error": message}, 2)
+
+
+def _text(args):
+    if args:
+        return " ".join(args)
+    from qyano.clipboard import read_text
+    value = read_text()
+    if value is None:
+        raise ValueError("No text supplied and the clipboard is empty or unavailable")
+    return value
 
 
 def dispatch(argv):
@@ -93,39 +104,58 @@ def dispatch(argv):
         return Result({"env_action": args[0]}) if len(args) == 1 and args[0] in ("install", "update", "status") else _usage("Usage: qy env install|update|status")
     if command == "res":
         if not args:
-            return Result({"interactive_research": True})
+            from qyano.clipboard import read_text
+            value = read_text()
+            if value is None:
+                return Result({"interactive_research": True})
+            args = [value]
         from agent import ai_agent
         answer = ai_agent(" ".join(args))
         return Result({"answer": answer}, 1 if answer == "AI not enabled" else 0)
     if command == "base":
-        if len(args) != 2 or args[0] not in ("encode", "decode"):
-            return _usage("Usage: qy base encode|decode TEXT")
+        if not args or args[0] not in ("encode", "decode"):
+            return _usage("Usage: qy base encode|decode [TEXT]")
+        try:
+            value = _text(args[1:])
+        except ValueError as exc:
+            return _usage(str(exc))
         from hbe import hbe_engine
-        result = hbe_engine(args[1], "enc" if args[0] == "encode" else "dec")
+        result = hbe_engine(value, "enc" if args[0] == "encode" else "dec")
     elif command == "hash":
-        if len(args) != 1:
-            return _usage("Usage: qy hash TEXT")
+        try:
+            value = _text(args)
+        except ValueError as exc:
+            return _usage(str(exc))
         from hbe import hbe_engine
-        result = hbe_engine(args[0], "hash")
+        result = hbe_engine(value, "hash")
     elif command in ("ihash", "ibase", "iden"):
-        if len(args) != 1:
-            return _usage(f"Usage: qy {command} TEXT")
+        try:
+            value = _text(args)
+        except ValueError as exc:
+            return _usage(str(exc))
         from eid import identifier_engine
-        result = identifier_engine(args[0])
+        result = identifier_engine(value)
         if command != "iden":
             wanted = ("hash",) if command == "ihash" else ("base64", "base64-url")
             matches = [entry for entry in result["identifiers"] if entry["type"] in wanted]
-            result = {"input": args[0], "identifiers": matches or [{"type": "unknown"}]}
+            result = {"input": value, "identifiers": matches or [{"type": "unknown"}]}
     elif command == "port":
-        if len(args) not in (1, 2):
-            return _usage("Usage: qy port PORT|SERVICE [PROTOCOL]")
+        if len(args) > 2:
+            return _usage("Usage: qy port [PORT|SERVICE] [PROTOCOL]")
+        if not args:
+            try:
+                args = [_text([])]
+            except ValueError as exc:
+                return _usage(str(exc))
         from portg import potg_engine
         result = potg_engine(args[0], args[1] if len(args) == 2 else None)
     elif command == "cve":
-        if not args:
-            return _usage("Usage: qy cve CVE-ID|KEYWORDS")
+        try:
+            value = _text(args)
+        except ValueError as exc:
+            return _usage(str(exc))
         from agent import nvd_search
-        result = nvd_search(" ".join(args))
+        result = nvd_search(value)
     else:
         return _usage(f"Unknown command: {name}")
     return Result(result, 1 if "error" in result or result.get("status") in ("error", "unavailable") else 0)

@@ -254,8 +254,15 @@ def main(args, json_mode=False):
         elif args == ["target", "clear"]:
             clear_target()
             _output({"current_target": None} if json_mode else "Current target cleared.", json_mode)
-        elif len(args) >= 2 and args[0] == "search":
-            _output(list_notes(query=" ".join(args[1:])), json_mode)
+        elif args[0] == "search":
+            if len(args) > 1:
+                query = " ".join(args[1:])
+            else:
+                from qyano.clipboard import read_text
+                query = read_text()
+                if query is None:
+                    raise ValueError("No search text supplied and the clipboard is empty or unavailable")
+            _output(list_notes(query=query), json_mode)
         elif len(args) == 2 and args[0] == "show":
             note = find_note(_id(args[1]))
             if note is None:
@@ -298,7 +305,13 @@ def quick_note(args, json_mode=False):
     try:
         if not is_enabled():
             raise ValueError("Quick Notes is disabled. Run 'qy notes enable' or enable it in 'qy connect'.")
-        text = " ".join(args) if args else input("note> ")
+        if args:
+            text = " ".join(args)
+        else:
+            from qyano.clipboard import read_text
+            text = read_text()
+            if text is None:
+                text = input("note> ")
         _output(add_note(text), json_mode)
         return 0
     except (OSError, ValueError, EOFError, KeyboardInterrupt) as exc:

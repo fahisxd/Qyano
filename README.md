@@ -48,6 +48,8 @@ qy res 'Explain CVE-2021-44228'
 qy res
 ```
 
+Text commands accept unquoted words, such as `qy hash hello world`. When you omit text, Qyano reads the copied text from the system clipboard, so `qy hash` hashes what you copied. This also works for Base64, identification, port lookup, CVE search, research, and Quick Notes search. `qy res` starts its interactive session if the clipboard is empty. Clipboard access uses an available system command such as `wl-paste`, `xclip`, `xsel`, or `pbpaste`.
+
 Run `qy help` for the full command list. Most tool commands accept `--json` for machine-readable output.
 
 Short aliases include `h` for `hash`, `hi` for `ihash`, `e` for `base encode`, `d` for `base decode`, `p` for `port`, `c` for `cve`, and `r` for `res`. You can also manage your own aliases:
@@ -89,7 +91,7 @@ qy notes del 12
 qy notes export
 ```
 
-`qy n` with no text opens a one-line note prompt. `qy notes` lists the 20 most recent notes. Search checks note text and target labels without regard to case. Editing prompts for replacement text, and deletion asks for confirmation. `qy notes export` writes a Markdown file in the current directory without replacing an existing file; you can also give it a path.
+`qy n` with no text saves the copied text, or opens a one-line note prompt if the clipboard is empty. `qy notes` lists the 20 most recent notes. Search checks note text and target labels without regard to case. Editing prompts for replacement text, and deletion asks for confirmation. `qy notes export` writes a Markdown file in the current directory without replacing an existing file; you can also give it a path.
 
 When you enter a target IP in the connector workflow, Qyano makes it the current note target. Later notes are tagged with that IP; notes saved before a target is set are tagged `GENERAL`. The current target remains set until the next connector target replaces it or you run `qy notes target clear`. Run `qy notes target` to check it.
 
