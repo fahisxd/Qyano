@@ -215,6 +215,7 @@ def export_notes(destination=None):
 
 
 def _id(value):
+    value = value.strip().removeprefix("#")
     if not value.isdecimal() or int(value) < 1:
         raise ValueError("Note ID must be a positive number")
     return int(value)
@@ -263,24 +264,51 @@ def main(args, json_mode=False):
                 if query is None:
                     raise ValueError("No search text supplied and the clipboard is empty or unavailable")
             _output(list_notes(query=query), json_mode)
-        elif len(args) == 2 and args[0] == "show":
-            note = find_note(_id(args[1]))
+        elif args[0] == "show" and len(args) <= 2:
+            if len(args) == 1:
+                from qyano.clipboard import read_text
+                identifier = read_text()
+                if identifier is None:
+                    raise ValueError("No note ID supplied and the clipboard is empty or unavailable")
+            else:
+                identifier = args[1]
+            note = find_note(_id(identifier))
             if note is None:
-                raise ValueError(f"Note #{args[1]} not found")
+                raise ValueError(f"Note #{identifier} not found")
             _output(note, json_mode)
-        elif len(args) >= 2 and args[0] == "edit":
-            note_id = _id(args[1])
+        elif args[0] == "edit":
+            if len(args) == 1:
+                from qyano.clipboard import read_text
+                identifier = read_text()
+                if identifier is None:
+                    raise ValueError("No note ID supplied and the clipboard is empty or unavailable")
+            else:
+                identifier = args[1]
+            note_id = _id(identifier)
             note = find_note(note_id)
             if note is None:
                 raise ValueError(f"Note #{note_id} not found")
-            if len(args) == 2:
+            if len(args) <= 2:
                 print(f"Current text: {note['text']}")
-                text = input("New note text: ")
+                if len(args) == 2:
+                    from qyano.clipboard import read_text
+                    text = read_text()
+                else:
+                    text = None
+                if text is None:
+                    text = input("New note text: ")
             else:
                 text = " ".join(args[2:])
             _output(edit_note(note_id, text), json_mode)
-        elif len(args) == 2 and args[0] == "del":
-            note_id = _id(args[1])
+        elif args[0] == "del" and len(args) <= 2:
+            if len(args) == 1:
+                from qyano.clipboard import read_text
+                identifier = read_text()
+                if identifier is None:
+                    raise ValueError("No note ID supplied and the clipboard is empty or unavailable")
+            else:
+                identifier = args[1]
+            note_id = _id(identifier)
             if find_note(note_id) is None:
                 raise ValueError(f"Note #{note_id} not found")
             if input(f"Delete note #{note_id}? [y/N]: ").strip().lower() not in ("y", "yes"):

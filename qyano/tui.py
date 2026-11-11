@@ -78,10 +78,8 @@ def create_app():
         def on_input_submitted(self, event: Input.Submitted):
             raw = event.value.strip()
             event.input.value = ""
-            if not raw:
-                return
             try:
-                tokens = shlex.split(raw)
+                tokens = shlex.split(raw) if raw else shlex.split(sections[self.section][1])
             except ValueError as exc:
                 self.query_one("#output", Static).update(str(exc))
                 return

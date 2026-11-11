@@ -102,6 +102,26 @@ class NotesTests(unittest.TestCase):
                 self.assertEqual(main(["notes", "search"]), 0)
             self.assertIn("Copied SSH finding", result.getvalue())
 
+    def test_note_ids_and_edit_text_use_clipboard(self):
+        with tempfile.TemporaryDirectory() as directory, \
+             patch.dict(os.environ, {"XDG_DATA_HOME": directory}), \
+             contextlib.redirect_stdout(io.StringIO()):
+            notes.set_enabled(True)
+            note = notes.add_note("old text")
+            with patch("qyano.clipboard.read_text", return_value=f"#{note['id']}"):
+                self.assertEqual(main(["notes", "show"]), 0)
+            with patch("qyano.clipboard.read_text", return_value="copied replacement"):
+                self.assertEqual(main(["notes", "edit", str(note["id"])]), 0)
+            self.assertEqual(notes.find_note(note["id"])["text"], "copied replacement")
+            with patch("qyano.clipboard.read_text", return_value=f"#{note['id']}"), \
+                 patch("builtins.input", return_value="typed replacement"):
+                self.assertEqual(main(["notes", "edit"]), 0)
+            self.assertEqual(notes.find_note(note["id"])["text"], "typed replacement")
+            with patch("qyano.clipboard.read_text", return_value=f"#{note['id']}"), \
+                 patch("builtins.input", return_value="y"):
+                self.assertEqual(main(["notes", "del"]), 0)
+            self.assertIsNone(notes.find_note(note["id"]))
+
     def test_setup_can_enable_notes(self):
         with tempfile.TemporaryDirectory() as directory, \
              patch.dict(os.environ, {"XDG_DATA_HOME": directory, "XDG_CONFIG_HOME": directory}), \

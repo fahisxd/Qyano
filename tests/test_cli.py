@@ -72,6 +72,17 @@ class CLITests(unittest.TestCase):
             self.assertEqual(dispatch(["alias", "reset"]).code, 0)
             self.assertEqual(dispatch(["h", "hello"]).code, 0)
 
+    def test_alias_values_can_come_from_clipboard(self):
+        with tempfile.TemporaryDirectory() as directory, patch.dict(os.environ, {"XDG_CONFIG_HOME": directory}):
+            with patch("qyano.clipboard.read_text", return_value="b base encode"):
+                self.assertEqual(dispatch(["alias", "set"]).code, 0)
+            self.assertEqual(dispatch(["b", "hello"]).value["base64/encode"], "aGVsbG8=")
+            with patch("qyano.clipboard.read_text", return_value="b"):
+                self.assertEqual(dispatch(["alias", "remove"]).code, 0)
+            with patch("qyano.clipboard.read_text", return_value="base decode"):
+                self.assertEqual(dispatch(["alias", "set", "b"]).code, 0)
+            self.assertEqual(dispatch(["b", "aGVsbG8="]).value["base64/decode"], "hello")
+
     def test_json_and_errors(self):
         out = io.StringIO()
         with contextlib.redirect_stdout(out):
@@ -170,6 +181,10 @@ class CLITests(unittest.TestCase):
                 self.assertIn(dispatch(["hash", "hello"]).value["md5"],
                               str(app.query_one("#output", Static).content))
                 self.assertIn("Hashes", str(app.query_one("#output", Static).content))
+                with patch("qyano.clipboard.read_text", return_value="clipboard text"):
+                    await pilot.press("enter")
+                self.assertIn(dispatch(["hash", "clipboard text"]).value["md5"],
+                              str(app.query_one("#output", Static).content))
                 await pilot.press("ctrl+5")
                 self.assertIn("port", str(app.query_one("#guide", Static).content).lower())
 

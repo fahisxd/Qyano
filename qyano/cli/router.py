@@ -169,8 +169,14 @@ def _alias(args):
     try:
         if action == "list" and not rest:
             return Result(aliases.list_aliases())
+        if action == "set" and len(rest) < 2:
+            import shlex
+            copied = shlex.split(_text([]))
+            rest = [*rest, *copied]
         if action == "set" and len(rest) in (2, 3):
             return Result(aliases.set_alias(rest[0], rest[1:]))
+        if action == "remove" and not rest:
+            rest = [_text([]).strip()]
         if action == "remove" and len(rest) == 1:
             return Result(aliases.remove_alias(rest[0]))
         if action == "reset" and not rest:
