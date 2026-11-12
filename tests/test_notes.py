@@ -125,10 +125,9 @@ class NotesTests(unittest.TestCase):
     def test_setup_can_enable_notes(self):
         with tempfile.TemporaryDirectory() as directory, \
              patch.dict(os.environ, {"XDG_DATA_HOME": directory, "XDG_CONFIG_HOME": directory}), \
-             patch("builtins.input", side_effect=["", "", "n", "y"]), \
-             patch.object(connector, "connector_shell", return_value=0), \
+             patch("builtins.input", side_effect=["notes", "y", "exit"]), \
              contextlib.redirect_stdout(io.StringIO()):
-            self.assertEqual(main(["connect"]), 0)
+            self.assertEqual(main(["con", "add", "lab"]), 0)
             self.assertTrue(notes.is_enabled())
 
     def test_routes(self):

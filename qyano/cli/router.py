@@ -13,15 +13,18 @@ COMMANDS = {
     "iden": "iden", "identify": "iden", "port": "port", "cve": "cve",
     "res": "res", "research": "res", "alias": "alias", "tui": "tui",
     "help": "help", "agent": "agent", "env": "env", "update": "update",
-    "connect": "connect", "n": "n", "notes": "notes",
+    "connect": "connect", "con": "con", "vpn": "vpn", "n": "n", "notes": "notes",
 }
 
 HELP = """Usage: qy [--json] COMMAND [ARGS]
 
-qy                            Run saved connectors
+qy                            Run the active connector's commands
 qy tui                        Open the terminal interface
-qy connect                    Set up SSH, network, AI summary, and Quick Notes
-qy connect shell              Add, list, edit, or delete connectors
+qy con add [NAME]              Create a connector and open its shell
+qy con list|edit|use|del       Manage named connectors
+qy vpn [CONNECTOR]             Start its VPN in a detached terminal
+qy vpn des [CONNECTOR]         Disconnect its VPN
+qy vpn status [CONNECTOR]      Check its VPN terminal
 qy n [TEXT]                   Save a quick note; omitted text uses clipboard
 qy notes                      List recent notes
 qy notes search QUERY         Search notes
@@ -65,7 +68,7 @@ def _text(args):
 def dispatch(argv):
     """Return a structured result; only the entry point renders it."""
     if not argv:
-        return Result({"connector_action": "run"})
+        return Result({"con_action": "run", "args": []})
     name, *args = argv
     command = COMMANDS.get(name)
     if command is None:
@@ -83,11 +86,13 @@ def dispatch(argv):
     if command == "tui":
         return Result({"launch_tui": True}) if not args else _usage("tui takes no arguments")
     if command == "connect":
-        if not args:
-            return Result({"connector_action": "setup"})
-        if args == ["shell"]:
-            return Result({"connector_action": "shell"})
+        if not args or args == ["shell"]:
+            return Result({"con_action": "legacy", "args": []})
         return _usage("Usage: qy connect [shell]")
+    if command == "con":
+        return Result({"con_action": "manage", "args": args})
+    if command == "vpn":
+        return Result({"con_action": "vpn", "args": args})
     if command == "n":
         return Result({"notes_action": "add", "args": args})
     if command == "notes":

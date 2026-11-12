@@ -64,21 +64,29 @@ qy alias reset
 
 ## Connectors
 
-Run `qy connect` to set up the connector engine. It asks for an attack machine SSH target in `user@host` form; leave it empty to run commands locally. For SSH, you can supply a private key path, or let SSH use its configured keys or prompt for a password. Setup checks the SSH connection. Qyano saves the host, port, and key path, but never a password.
+A connector is a named profile containing SSH settings, an optional network check, an optional VPN, and an ordered set of commands. Create one with `qy con add lab`. This opens its connector shell. Use `qy con list` to see profiles, `qy con use lab` to make one active, and `qy con edit lab` to reopen its shell. `qy connect` remains an alias for opening the active profile or creating the first one.
 
-Setup then asks for a network or VPN command and runs it before continuing. Leave it empty if no connection command is needed. Finally, choose whether to enable an AI summary and Quick Notes. AI summaries require a configured key from `qy agent setup`. Setup opens the connector shell when complete.
+Inside the connector shell, use `ssh` to set a `user@host`, port, and optional private key; `ssh local` runs commands on this machine. SSH can prompt for a password when no key is configured, but Qyano never saves the password. Use `network` for a one-shot connectivity check that should exit successfully before connector commands run. Use `vpn` to enter a VPN start command and optional disconnect command. Each profile has its own VPN settings.
 
-You can reopen the connector shell with `qy connect shell`. It supports `add`, `list`, `edit NAME`, `del NAME`, and `exit`. When adding a connector, enter a name and a shell command. Use `&QUIC` where the target IP belongs and `QUIC1`, `QUIC2`, and so on for inputs. The shell asks you to label each extra input, such as `wordlist`, `subdomain`, or `mode`.
+Use `add` or `add NAME` in the shell to save a command, `list` to see commands, `edit NAME` to change one, `args NAME` to edit its parameter labels and defaults, and `del NAME` to remove one. A template can use `&QUIC` for the target IP and `QUIC1`, `QUIC2`, and so on for prompted arguments. For example: `tool --host &QUIC --wordlist QUIC1 --mode QUIC2`. Keep placeholders unquoted; Qyano quotes supplied values. The shell also has `ai` for per-profile AI summaries and `notes` to enable or disable Quick Notes.
 
-For example, a connector command could be `tool --host &QUIC --wordlist QUIC1 --mode QUIC2`. Qyano asks for the `wordlist` and `mode` values before running it. Keep placeholders unquoted in the saved command; Qyano quotes the values when it fills them.
+```sh
+qy con add lab
+qy vpn
+qy vpn status
+qy
+qy vpn des
+```
 
-Run `qy` to use saved connectors. It asks for the network command again, with an option to stop asking on later runs, then asks for a target IP. It offers each connector in saved order and prompts for any plugin values. If AI summaries are enabled, it summarizes the results at the end. A failed network command stops the run before any connector starts.
+`qy vpn` starts the active profile's VPN in a detached tmux terminal, so VPN output does not occupy the current terminal. `qy vpn des` stops that terminal and runs the profile's disconnect command. Use `qy vpn lab` or `qy vpn des lab` to address a specific profile. You can inspect the detached terminal with `tmux -L qyano-vpn attach -t qyano-vpn-lab`. A configured network check runs in the current terminal when `qy` starts, after the VPN is active. Use `qy vpn` first when a profile has VPN settings.
 
-Connector settings live in `~/.config/qyano/connector.json` with owner-only permissions. Saved connector and network commands are shell commands, so only add commands you intend to run.
+Running `qy` asks for the target IP, then offers each command in the active profile in order and prompts for any arguments. If AI summaries are enabled, it summarizes the results at the end. Existing single-command connector settings are migrated to a `default` profile when read; their previous network command becomes the VPN start command.
+
+Connector settings live in `~/.config/qyano/connector.json` with owner-only permissions. Saved commands are shell commands, so only add commands you intend to run.
 
 ## Quick Notes Engine
 
-Quick Notes is optional and works entirely offline. Enable it during `qy connect` setup or later with `qy notes enable`. Turning it off with `qy notes disable` keeps existing notes on disk.
+Quick Notes is optional and works entirely offline. Enable it with `notes` inside a connector shell or with `qy notes enable`. Turning it off with `qy notes disable` keeps existing notes on disk.
 
 ```sh
 qy n "Found SSH on port 22"
